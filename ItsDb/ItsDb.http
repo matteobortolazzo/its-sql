@@ -1,0 +1,10 @@
+@ItsDb_HostAddress = http://localhost:5205
+
+POST {{ItsDb_HostAddress}}/query/
+Accept: application/json
+Content-Type: application/json
+
+{
+  "Sql": "SELECT *, Email, Name FROM users WHERE Email = 'test' AND Name = 'test' OR Name = 'x'"
+}
+###
