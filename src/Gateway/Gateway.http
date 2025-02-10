@@ -6,7 +6,7 @@ Accept: application/json
 Content-Type: application/json
 
 {
-  "Sql": "SELECT id, name FROM c WHERE name = 'Matteo1' OR id = 'matteo2'"
+  "Sql": "SELECT id, age FROM c WHERE age < 25"
 }
 
 ###
@@ -18,7 +18,8 @@ Content-Type: application/json
 {
   "id": "matteo1",
   "name": "Matteo1",
-  "city": "Asolo"
+  "city": "Asolo",
+  "age": 30
 }
 
 ###
@@ -30,7 +31,8 @@ Content-Type: application/json
 {
   "id": "matteo2",
   "name": "Matteo2",
-  "city": "Asolo"
+  "city": "Asolo",
+  "age": 20
 }
 
 ###

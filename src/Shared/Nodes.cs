@@ -7,7 +7,6 @@ namespace Shared;
 [JsonDerivedType(typeof(FromNode), typeDiscriminator: "from")]
 [JsonDerivedType(typeof(ColumnNode), typeDiscriminator: "column")]
 [JsonDerivedType(typeof(WhereNode), typeDiscriminator: "where")]
-[JsonDerivedType(typeof(ValueNode), typeDiscriminator: "value")]
 [JsonDerivedType(typeof(LogicalNode), typeDiscriminator: "logical")]
 [JsonDerivedType(typeof(ComparisonNode), typeDiscriminator: "comparison")]
 public abstract record Node();
@@ -22,7 +21,11 @@ public record ColumnNode(string Identifier) : Node;
 
 public record WhereNode(Node Node) : Node;
 
-public record ValueNode(string Value) : Node;
+[JsonDerivedType(typeof(StringValueNode), typeDiscriminator: "string")]
+[JsonDerivedType(typeof(NumberValueNode), typeDiscriminator: "number")]
+public abstract record ValueNode : Node;
+public record StringValueNode(string Value) : ValueNode;
+public record NumberValueNode(int Value) : ValueNode;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum LogicalOperation
@@ -36,7 +39,9 @@ public record LogicalNode(LogicalOperation Operation, Node Left, Node Right) : N
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ComparisonOperation
 {
-    Equal
+    Equal,
+    GreaterThan,
+    LessThan
 }
 
 public record ComparisonNode(ComparisonOperation Operation, ColumnNode Column, ValueNode Value) : Node;

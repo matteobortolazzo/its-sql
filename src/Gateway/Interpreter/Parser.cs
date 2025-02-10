@@ -4,6 +4,8 @@ namespace Gateway.Interpreter;
 
 public class Parser
 {
+    private static readonly string[] ValidComparisons = ["=", ">", "<"];
+
     public Node Parse(Token[] tokens)
     {
         var current = 0;
@@ -20,16 +22,16 @@ public class Parser
             {
                 return new QueryNode(select, null);
             }
-            
+
             if (tokens[current].Type != TokenType.Keyword || tokens[current].Value != "WHERE")
             {
                 throw new Exception("Expected WHERE");
             }
-            
+
             var where = ParseWhere(tokens, ref current);
             return new QueryNode(select, where);
         }
-        
+
         throw new Exception("Unsupported query");
     }
 
@@ -76,7 +78,7 @@ public class Parser
         var condition = ParseWhereClause(tokens, current, tokens.Length);
         return new WhereNode(condition);
     }
-    
+
     private static Node ParseWhereClause(Token[] tokens, int start, int end)
     {
         var lastOperatorIndex = -1;
@@ -84,11 +86,12 @@ public class Parser
         while (current < end)
         {
             if (tokens[current].Type == TokenType.Keyword &&
-                (tokens[current].Value == "AND" || 
+                (tokens[current].Value == "AND" ||
                  tokens[current].Value == "OR"))
             {
                 lastOperatorIndex = current;
             }
+
             current++;
         }
 
@@ -96,7 +99,7 @@ public class Parser
         {
             return ParseComparison(tokens, ref start);
         }
-        
+
         var left = ParseWhereClause(tokens, start, lastOperatorIndex);
         var operation = tokens[lastOperatorIndex].Value == "AND" ? LogicalOperation.And : LogicalOperation.Or;
         var right = ParseWhereClause(tokens, lastOperatorIndex + 1, end);
@@ -109,25 +112,50 @@ public class Parser
         {
             throw new Exception("Expected Identifier");
         }
-        
+
         var column = new ColumnNode(tokens[current].Value);
         current++;
 
-        if (tokens[current].Type != TokenType.Operator || tokens[current].Value != "=")
+        var operatorValue = tokens[current].Value;
+        if (tokens[current].Type != TokenType.Operator || !ValidComparisons.Contains(tokens[current].Value))
         {
-            throw new Exception("Expected =");
+            throw new Exception("Unsupported comparison");
         }
-        current++;
-        
-        if (tokens[current].Type != TokenType.String)
-        {
-            throw new Exception("Expected String");
-        }
-        
-        var value = new ValueNode(tokens[current].Value);
+
         current++;
 
-        return new ComparisonNode(ComparisonOperation.Equal, column, value);
+        ValueNode valueNode;
+        if (tokens[current].Type == TokenType.String)
+        {
+            valueNode = new StringValueNode(tokens[current].Value);
+        }
+
+        else if (tokens[current].Type == TokenType.Number)
+        {
+            valueNode = new NumberValueNode(int.Parse(tokens[current].Value));
+        }
+        else
+        {
+            throw new Exception("Expected String or Number");
+        }
+
+        current++;
+        if (operatorValue == "=")
+        {
+            return new ComparisonNode(ComparisonOperation.Equal, column, valueNode);
+        }
+
+        if (operatorValue == "<")
+        {
+            return new ComparisonNode(ComparisonOperation.LessThan, column, valueNode);
+        }
+
+        if (operatorValue == ">")
+        {
+            return new ComparisonNode(ComparisonOperation.GreaterThan, column, valueNode);
+        }
+
+        throw new Exception("Unsupported comparison");
     }
 
     private static ColumnNode ParseColumn(Token[] tokens, ref int current)

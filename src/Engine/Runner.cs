@@ -121,13 +121,51 @@ public class Runner(ILogger logger, string container)
     private bool RunComparison(JsonObject result, ComparisonNode comparisonNode)
     {
         var column = comparisonNode.Column.Identifier;
-        var value = comparisonNode.Value.Value;
+        var value = comparisonNode.Value;
 
-        if (comparisonNode.Operation == ComparisonOperation.Equal)
+        if (value is StringValueNode stringValueNode)
         {
-            return result[column].ToString() == value;
+            return RunStringComparison(result, comparisonNode, column, stringValueNode.Value);
+        }
+
+        if (value is NumberValueNode numberValueNode)
+        {
+            return RunNumberComparison(result, comparisonNode, column, numberValueNode.Value);
         }
 
         throw new Exception("Unknown comparison operation");
+    }
+
+    private bool RunNumberComparison(JsonObject result, ComparisonNode comparisonNode, string column, int value)
+    {
+        var resultValue = result[column].Deserialize<int>();
+
+        if (comparisonNode.Operation == ComparisonOperation.Equal)
+        {
+            return resultValue == value;
+        }
+
+        if (comparisonNode.Operation == ComparisonOperation.GreaterThan)
+        {
+            return resultValue > value;
+        }
+
+        if (comparisonNode.Operation == ComparisonOperation.LessThan)
+        {
+            return resultValue < value;
+        }
+
+        throw new Exception("Unknown comparison operation");
+    }
+
+    private bool RunStringComparison(JsonObject result, ComparisonNode comparisonNode, string column, string value)
+    {
+        if (comparisonNode.Operation != ComparisonOperation.Equal)
+        {
+            throw new Exception("Unknown comparison operation");
+        }
+
+        var resultValue = result[column].Deserialize<string>();
+        return resultValue == value;
     }
 }

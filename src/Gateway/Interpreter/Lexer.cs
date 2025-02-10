@@ -17,7 +17,7 @@ public record Token(TokenType Type, string Value);
 
 public class Lexer
 {
-    private static readonly char[] Operators = ['=', '*', ','];
+    private static readonly char[] Operators = ['=', '*', ',', '>', '<'];
     private static readonly string[] Keyword = ["SELECT", "FROM", "WHERE", "AND", "OR"];
     
     public Token[] Tokenize(string input)
