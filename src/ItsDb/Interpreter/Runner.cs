@@ -22,6 +22,7 @@ public class Runner
     private void RunQuery(QueryNode queryNode)
     {
         RunSelect(queryNode.Select);
+
         if (queryNode.Where != null)
         {
             RunWhere(queryNode.Where);
@@ -37,8 +38,8 @@ public class Runner
     private void RunColumns(ColumnNode[] columnNodes)
     {
         foreach (var columnNode in columnNodes)
-            _output.AppendLine($"SELECT {columnNode.Identifier}");
         {
+            _output.AppendLine($"SELECT {columnNode.Identifier}");
         }
     }
 
