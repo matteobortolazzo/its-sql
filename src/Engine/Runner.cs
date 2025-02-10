@@ -1,80 +1,116 @@
-using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Shared;
 
 namespace Engine;
 
-public class Runner
+public class Runner(ILogger logger, string container)
 {
-    private readonly StringBuilder _output = new();
-    
-    public string Run(Node node)
+    public async Task<JsonObject[]> RunAsync(Node node)
     {
-        _output.Clear();
-        
         if (node is QueryNode queryNode)
         {
-            RunQuery(queryNode);
-            return _output.ToString();
+            return await RunQueryAsync(queryNode);
         }
-    
-        return _output.Append("Unknown node type").ToString();
+
+        throw new Exception("Unknown node type");
     }
 
-    private void RunQuery(QueryNode queryNode)
+    private async Task<JsonObject[]> RunQueryAsync(QueryNode queryNode)
     {
-        RunSelect(queryNode.Select);
-
+        var tasks = Directory.GetFiles(container)
+            .Select(async fileName =>
+            {
+                var content = await File.ReadAllTextAsync(fileName);
+                return JsonSerializer.Deserialize<JsonObject>(content);
+            });
+        var results = await Task.WhenAll(tasks);
+        if (results.Length == 0)
+        {
+            return [];
+        }
+        
         if (queryNode.Where != null)
         {
-            RunWhere(queryNode.Where);
+            results = RunWhere(results, queryNode.Where);
         }
+
+        return RunSelect(results, queryNode.Select);
     }
 
-    private void RunSelect(SelectNode selectNode)
+    private JsonObject[] RunSelect(JsonObject[] results, SelectNode selectNode)
     {
-        RunFrom(selectNode.From);
-        RunColumns(selectNode.Columns);
+        // RunFrom(selectNode.From);
+        return RunColumns(results, selectNode.Columns);
     }
 
-    private void RunColumns(ColumnNode[] columnNodes)
+    private JsonObject[] RunColumns(JsonObject[] results, ColumnNode[] columnNodes)
     {
-        foreach (var columnNode in columnNodes)
+        var selectedColumns = columnNodes.Select(node => node.Identifier).ToArray();
+        if (results.Length == 0)
         {
-            _output.AppendLine($"SELECT {columnNode.Identifier}");
+            return [];
         }
+
+        var columnsToRemove = results[0]
+            .Where(column =>
+                !selectedColumns.Contains(column.Key))
+            .Select(column => column.Key)
+            .ToArray();
+        foreach (var result in results)
+        {
+            foreach (var columnKey in columnsToRemove)
+            {
+                result.Remove(columnKey);
+            }
+        }
+
+        return results;
     }
 
     private void RunFrom(FromNode fromNode)
     {
-        _output.AppendLine($"FROM {fromNode.Table}");
     }
 
-    private void RunWhere(WhereNode whereNode)
+    private JsonObject[] RunWhere(JsonObject[] results, WhereNode whereNode)
     {
-        RunWhereClause(whereNode.Node);
+        return RunWhereClause(results, whereNode.Node);
     }
 
-    private void RunWhereClause(Node whereClauseNode)
+    private JsonObject[] RunWhereClause(JsonObject[] results, Node whereClauseNode)
     {
         if (whereClauseNode is ComparisonNode comparisonNode)
         {
-            RunComparison(comparisonNode);
+            return RunComparison(results, comparisonNode);
         }
-        else if (whereClauseNode is LogicalNode logicalNode)
+
+        if (whereClauseNode is LogicalNode logicalNode)
         {
-            RunLogical(logicalNode);
+            return RunLogical(results, logicalNode);
         }
+        
+        throw new Exception("Unknown where clause node type");
     }
 
-    private void RunLogical(LogicalNode logicalNode)
+    private JsonObject[] RunLogical(JsonObject[] results, LogicalNode logicalNode)
     {
-        RunWhereClause(logicalNode.Left);
-        _output.AppendLine(logicalNode.Operation == LogicalOperation.And ? "AND" : "OR");
-        RunWhereClause(logicalNode.Right);
+        // TODO: Fix logic
+        results = RunWhereClause(results, logicalNode.Left);
+        return RunWhereClause(results, logicalNode.Right);
     }
 
-    private void RunComparison(ComparisonNode comparisonNode)
+    private JsonObject[] RunComparison(JsonObject[] results, ComparisonNode comparisonNode)
     {
-        _output.AppendLine($"WHERE {comparisonNode.Column.Identifier} = {comparisonNode.Value.Value}");
+        var column = comparisonNode.Column.Identifier;
+        var value = comparisonNode.Value.Value;
+
+        if (comparisonNode.Operation == ComparisonOperation.Equal)
+        {
+            return results
+                .Where(result => result[column].ToString() == value)
+                .ToArray();
+        }
+        
+        throw new Exception("Unknown comparison operation");
     }
 }

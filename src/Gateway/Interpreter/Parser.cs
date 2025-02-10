@@ -15,6 +15,11 @@ public class Parser
         if (tokens[current].Value == "SELECT")
         {
             var select = ParseSelect(tokens, ref current);
+
+            if (current == tokens.Length)
+            {
+                return new QueryNode(select, null);
+            }
             
             if (tokens[current].Type != TokenType.Keyword || tokens[current].Value != "WHERE")
             {

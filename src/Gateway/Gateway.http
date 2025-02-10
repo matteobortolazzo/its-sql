@@ -6,7 +6,7 @@ Accept: application/json
 Content-Type: application/json
 
 {
-  "Sql": "SELECT *, Email, Name FROM users WHERE Email = 'test' AND Name = 'test' OR Name = 'x'"
+  "Sql": "SELECT id, name FROM c WHERE name = 'Matteo1'"
 }
 
 ###
@@ -16,8 +16,20 @@ Accept: application/json
 Content-Type: application/json
 
 {
-  "id": "matteo",
-  "name": "Matteo Bortolazzo",
+  "id": "matteo1",
+  "name": "Matteo1",
+  "city": "Asolo"
+}
+
+###
+
+PUT {{Gateway_HostAddress}}/users
+Accept: application/json
+Content-Type: application/json
+
+{
+  "id": "matteo2",
+  "name": "Matteo2",
   "city": "Asolo"
 }
 

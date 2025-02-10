@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Engine;
 using Microsoft.AspNetCore.Mvc;
 using Shared;
 
@@ -21,9 +22,13 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapPost("/{container}/query", ([FromRoute] string container, [FromBody] Node body) =>
+app.MapPost("/{container}/query", async (
+        ILogger<Program> logger,
+        [FromRoute] string container, [FromBody] Node body) =>
     {
-        return TypedResults.Ok(body);
+        var runner = new Runner(logger, container);
+        var result = await runner.RunAsync(body);
+        return TypedResults.Ok(result);
     })
     .WithName("Query");
 

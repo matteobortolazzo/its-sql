@@ -44,7 +44,8 @@ app.MapPost("/{container}/query", async (
 
         var httpClient = httpClientFactory.CreateClient("gateway");
         var response = await httpClient.PostAsJsonAsync($"{container}/query", ast);
-        return TypedResults.Ok(response.IsSuccessStatusCode);
+        var results = await response.Content.ReadFromJsonAsync<JsonObject[]>();
+        return TypedResults.Ok(results);
     })
     .WithName("Query");
 
