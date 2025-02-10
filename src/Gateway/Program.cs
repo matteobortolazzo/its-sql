@@ -1,9 +1,8 @@
-using System.Text.Json;
 using System.Text.Json.Nodes;
 using Gateway.Interpreter;
 using Microsoft.AspNetCore.Mvc;
 
-const string engineAddress = "http://localhost:5263";
+const string engineAddress = "http://db_engine:8080";
 
 var builder = WebApplication.CreateBuilder(args);
 

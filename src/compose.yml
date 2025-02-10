@@ -1,0 +1,21 @@
+networks:
+  db_network:
+    driver: bridge
+
+services:
+  engine:
+    build:
+      context: .
+      dockerfile: Engine/Dockerfile
+    container_name: db_engine
+    networks:
+      - db_network
+  gateway:
+    build:
+      context: .
+      dockerfile: Gateway/Dockerfile
+    container_name: db_gateway
+    networks:
+      - db_network
+    ports:
+      - "8082:8080"
