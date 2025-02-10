@@ -37,9 +37,10 @@ app.MapPut("{container}/", async (
         [FromRoute] string container, 
         [FromBody] JsonObject body) =>
     {
-        if (!Directory.Exists(container))
+        var containerPath = GetContainerPath(container);
+        if (!Directory.Exists(containerPath))
         {
-            Directory.CreateDirectory(container);
+            Directory.CreateDirectory(containerPath);
         }
         
         var id = body["id"]!.ToString();
@@ -47,7 +48,7 @@ app.MapPut("{container}/", async (
         logger.LogInformation(id);
         
         var json = JsonSerializer.Serialize(body);
-        await File.WriteAllTextAsync($"{container}/{id}.json", json);
+        await File.WriteAllTextAsync($"{containerPath}/{id}.json", json);
         return TypedResults.Ok();
     })
     .WithName("Upsert");
@@ -57,7 +58,7 @@ app.MapGet("{container}/{documentId}", async (
         [FromRoute] string container, 
         [FromRoute] string documentId) => 
     {
-        var path = $"{container}/{documentId}.json";
+        var path = $"{GetContainerPath(container)}/{documentId}.json";
         if (!File.Exists(path))
         {
             return (IResult)TypedResults.NotFound();
@@ -70,3 +71,6 @@ app.MapGet("{container}/{documentId}", async (
     .WithName("Read");
 
 app.Run();
+return;
+
+string GetContainerPath(string container) => $"/etc/data/{container}";

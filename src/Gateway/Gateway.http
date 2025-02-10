@@ -6,7 +6,7 @@ Accept: application/json
 Content-Type: application/json
 
 {
-  "Sql": "SELECT id, age FROM c WHERE age < 25"
+  "Sql": "SELECT id, age FROM c"
 }
 
 ###

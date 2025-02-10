@@ -2,14 +2,20 @@ networks:
   db_network:
     driver: bridge
 
+volumes:
+  db_data:
+
 services:
   engine:
+    user: root
     build:
       context: .
       dockerfile: Engine/Dockerfile
     container_name: db_engine
     networks:
       - db_network
+    volumes:
+      - db_data:/etc/data
   gateway:
     build:
       context: .

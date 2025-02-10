@@ -18,7 +18,7 @@ public class Runner(ILogger logger, string container)
 
     private async Task<JsonObject[]> RunQueryAsync(QueryNode queryNode)
     {
-        var tasks = Directory.GetFiles(container)
+        var tasks = Directory.GetFiles(GetContainerPath())
             .Select(async fileName =>
             {
                 var content = await File.ReadAllTextAsync(fileName);
@@ -168,4 +168,5 @@ public class Runner(ILogger logger, string container)
         var resultValue = result[column].Deserialize<string>();
         return resultValue == value;
     }
+    private string GetContainerPath() => $"/etc/data/{container}";
 }
