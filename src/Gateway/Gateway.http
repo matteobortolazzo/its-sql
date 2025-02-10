@@ -6,7 +6,7 @@ Accept: application/json
 Content-Type: application/json
 
 {
-  "Sql": "SELECT id, age FROM c"
+  "Sql": "SELECT id, age FROM c WHERE city = 'Verona'"
 }
 
 ###
@@ -29,13 +29,13 @@ Accept: application/json
 Content-Type: application/json
 
 {
-  "id": "matteo2",
-  "name": "Matteo2",
-  "city": "Asolo",
-  "age": 20
+  "id": "matteo3",
+  "name": "Matteo3",
+  "city": "Verona",
+  "age": 10
 }
 
 ###
 
-GET {{Gateway_HostAddress}}/users/matteo1
+GET {{Gateway_HostAddress}}/users/matteo1?partitionKeyValue=Asolo
 Accept: application/json
