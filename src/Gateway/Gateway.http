@@ -20,3 +20,8 @@ Content-Type: application/json
   "name": "Matteo Bortolazzo",
   "city": "Asolo"
 }
+
+###
+
+GET {{Gateway_HostAddress}}/users/matteo
+Accept: application/json

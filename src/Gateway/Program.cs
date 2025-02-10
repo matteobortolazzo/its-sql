@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using Gateway.Interpreter;
 using Microsoft.AspNetCore.Mvc;
@@ -5,6 +7,8 @@ using Microsoft.AspNetCore.Mvc;
 const string engineAddress = "http://db_engine:8080";
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
 
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
@@ -44,14 +48,41 @@ app.MapPost("/{container}/query", async (
     })
     .WithName("Query");
 
-app.MapPut("/{container}", ([FromRoute] string container, [FromBody] JsonObject jsonObject) =>
+app.MapPut("/{container}", async (
+        ILogger<Program> logger,
+        IHttpClientFactory httpClientFactory,
+        [FromRoute] string container,
+        [FromBody] JsonObject jsonObject) =>
     {
         var partitionKeyPath = containers[container];
         var partitionKeyValue = jsonObject[partitionKeyPath];
-        // Decide which node to call
-        return TypedResults.Ok(partitionKeyValue);
+        
+        logger.LogInformation(partitionKeyValue.ToString());
+        
+        var httpClient = httpClientFactory.CreateClient("gateway");
+
+        var body = JsonSerializer.Serialize(jsonObject);
+        
+        logger.LogInformation(body);
+        
+        var content = new StringContent(body, Encoding.UTF8, "application/json");
+        var response = await httpClient.PutAsync(container, content);
+        return TypedResults.Ok(response.ReasonPhrase);
     })
     .WithName("Upsert");
+
+
+
+app.MapGet("/{container}/{documentId}", async (
+        IHttpClientFactory httpClientFactory,
+        [FromRoute] string container,
+        [FromRoute] string documentId) =>
+    {
+        var httpClient = httpClientFactory.CreateClient("gateway");
+        var results = await httpClient.GetFromJsonAsync<JsonObject>($"{container}/{documentId}");
+        return TypedResults.Ok(results);
+    })
+    .WithName("Get");
 
 app.Run();
 
