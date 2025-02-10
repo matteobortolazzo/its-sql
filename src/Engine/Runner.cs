@@ -29,7 +29,7 @@ public class Runner(ILogger logger, string container)
         {
             return [];
         }
-        
+
         if (queryNode.Where != null)
         {
             results = RunWhere(results, queryNode.Where);
@@ -40,7 +40,6 @@ public class Runner(ILogger logger, string container)
 
     private JsonObject[] RunSelect(JsonObject[] results, SelectNode selectNode)
     {
-        // RunFrom(selectNode.From);
         return RunColumns(results, selectNode.Columns);
     }
 
@@ -68,49 +67,67 @@ public class Runner(ILogger logger, string container)
         return results;
     }
 
-    private void RunFrom(FromNode fromNode)
-    {
-    }
-
     private JsonObject[] RunWhere(JsonObject[] results, WhereNode whereNode)
     {
-        return RunWhereClause(results, whereNode.Node);
+        List<JsonObject> newResults = [];
+        foreach (var result in results)
+        {
+            var pass = RunWhereClause(result, whereNode.Node);
+            if (pass)
+            {
+                newResults.Add(result);
+            }
+        }
+
+        return newResults.ToArray();
     }
 
-    private JsonObject[] RunWhereClause(JsonObject[] results, Node whereClauseNode)
+    private bool RunWhereClause(JsonObject result, Node whereClauseNode)
     {
         if (whereClauseNode is ComparisonNode comparisonNode)
         {
-            return RunComparison(results, comparisonNode);
+            return RunComparison(result, comparisonNode);
         }
 
         if (whereClauseNode is LogicalNode logicalNode)
         {
-            return RunLogical(results, logicalNode);
+            return RunLogical(result, logicalNode);
         }
-        
+
         throw new Exception("Unknown where clause node type");
     }
 
-    private JsonObject[] RunLogical(JsonObject[] results, LogicalNode logicalNode)
+    private bool RunLogical(JsonObject result, LogicalNode logicalNode)
     {
-        // TODO: Fix logic
-        results = RunWhereClause(results, logicalNode.Left);
-        return RunWhereClause(results, logicalNode.Right);
+        var leftPass = RunWhereClause(result, logicalNode.Left);
+        if (logicalNode.Operation == LogicalOperation.And)
+        {
+            if (!leftPass)
+            {
+                return false;
+            }
+        }
+        else // OR
+        {
+            if (leftPass)
+            {
+                return true;
+            }
+        }
+
+        return RunWhereClause(result, logicalNode.Right);
     }
 
-    private JsonObject[] RunComparison(JsonObject[] results, ComparisonNode comparisonNode)
+    private bool RunComparison(JsonObject result, ComparisonNode comparisonNode)
     {
         var column = comparisonNode.Column.Identifier;
         var value = comparisonNode.Value.Value;
 
         if (comparisonNode.Operation == ComparisonOperation.Equal)
         {
-            return results
-                .Where(result => result[column].ToString() == value)
-                .ToArray();
+            return result[column].ToString() == value;
         }
-        
+
         throw new Exception("Unknown comparison operation");
     }
 }

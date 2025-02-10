@@ -6,7 +6,7 @@ Accept: application/json
 Content-Type: application/json
 
 {
-  "Sql": "SELECT id, name FROM c WHERE name = 'Matteo1'"
+  "Sql": "SELECT id, name FROM c WHERE name = 'Matteo1' OR id = 'matteo2'"
 }
 
 ###
@@ -35,5 +35,5 @@ Content-Type: application/json
 
 ###
 
-GET {{Gateway_HostAddress}}/users/matteo
+GET {{Gateway_HostAddress}}/users/matteo1
 Accept: application/json
