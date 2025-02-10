@@ -1,0 +1,12 @@
+@Engine_HostAddress = http://localhost:5263
+
+POST {{Engine_HostAddress}}/
+Accept: application/json
+Content-Type: application/json
+
+{
+  "id": "Adasdasdasda",
+  "name": "Adasdasdasda",
+  "city": "Vicenza"
+}
+###

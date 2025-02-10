@@ -1,0 +1,21 @@
+@Gateway_HostAddress = http://localhost:5205
+
+POST {{Gateway_HostAddress}}/users/query
+Accept: application/json
+Content-Type: application/json
+
+{
+  "Sql": "SELECT *, Email, Name FROM users WHERE Email = 'test' AND Name = 'test' OR Name = 'x'"
+}
+
+###
+
+PUT {{Gateway_HostAddress}}/users
+Accept: application/json
+Content-Type: application/json
+
+{
+  "id": "matteo",
+  "name": "Matteo Bortolazzo",
+  "city": "Asolo"
+}

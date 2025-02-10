@@ -1,5 +1,6 @@
-using ItsDb.Interpreter;
+using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Mvc;
+using Shared;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,17 +18,18 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-app.MapPost("/query", ([FromBody] SqlRequest request) =>
+app.MapPost("/{container}/query", ([FromRoute] string container, [FromBody] Node body) =>
     {
-        var lexer = new Lexer();
-        var tokens = lexer.Tokenize(request.Sql);
-        var parser = new Parser();
-        var ast = parser.Parse(tokens);
-        var runner = new Runner();
-        var result = runner.Run(ast);
-        return TypedResults.Ok(result);
+        return TypedResults.Ok(body);
     })
     .WithName("Query");
+
+app.MapPut("{container}/", ([FromRoute] string container, [FromBody] JsonObject body) =>
+    {
+        var c = body["city"];
+        return TypedResults.Ok();
+    })
+    .WithName("Upsert");
 
 app.Run();
 

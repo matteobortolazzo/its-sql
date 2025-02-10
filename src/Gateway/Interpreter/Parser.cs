@@ -1,45 +1,6 @@
-using System.Text.Json.Serialization;
+using Shared;
 
-namespace ItsDb.Interpreter;
-
-[JsonDerivedType(typeof(QueryNode))]
-[JsonDerivedType(typeof(SelectNode))]
-[JsonDerivedType(typeof(FromNode))]
-[JsonDerivedType(typeof(ColumnNode))]
-[JsonDerivedType(typeof(WhereNode))]
-[JsonDerivedType(typeof(ValueNode))]
-[JsonDerivedType(typeof(LogicalNode))]
-[JsonDerivedType(typeof(ComparisonNode))]
-public abstract record Node();
-
-public record QueryNode(SelectNode Select, WhereNode? Where) : Node;
-
-public record SelectNode(ColumnNode[] Columns, FromNode From) : Node;
-
-public record FromNode(string Table) : Node;
-
-public record ColumnNode(string Identifier) : Node;
-
-public record WhereNode(Node Node) : Node;
-
-public record ValueNode(string Value) : Node;
-
-[JsonConverter(typeof(JsonStringEnumConverter))]
-public enum LogicalOperation
-{
-    And,
-    Or
-}
-
-public record LogicalNode(LogicalOperation Operation, Node Left, Node Right) : Node;
-
-[JsonConverter(typeof(JsonStringEnumConverter))]
-public enum ComparisonOperation
-{
-    Equal
-}
-
-public record ComparisonNode(ComparisonOperation Operation, ColumnNode Column, ValueNode Value) : Node;
+namespace Gateway.Interpreter;
 
 public class Parser
 {

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace ItsDb.Interpreter;
+namespace Gateway.Interpreter;
 
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum TokenType
