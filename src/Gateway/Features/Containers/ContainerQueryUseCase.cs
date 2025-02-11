@@ -53,6 +53,8 @@ public static class ContainerQueryUseCase
                         title: "WHERE clause must contain partition key");
                 }
 
+                // TODO: Remove the partition key filter from AST, as it's not needed by the engine
+                
                 await dockerService.StartEngineContainerAsync(partitionKeyValue);
 
                 var response = await engineService.GetClient(partitionKeyValue)

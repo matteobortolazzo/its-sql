@@ -25,6 +25,7 @@ The project is divided in two main components:
 - Responsible to route the requests to the correct engine
 - Creates engine containers when needed
 - Exposed to the clients
+- Use SQLite to store container metadata
 
 ## Run the project
 
