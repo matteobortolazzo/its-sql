@@ -19,7 +19,7 @@ public class Lexer
 {
     private static readonly char[] Operators = ['=', '*', ',', '>', '<'];
     private static readonly string[] Keyword = ["SELECT", "FROM", "WHERE", "AND", "OR"];
-    
+
     public Token[] Tokenize(string input)
     {
         var tokens = new List<Token>();
@@ -91,7 +91,7 @@ public class Lexer
                 current++;
             }
         }
-        
+
         return tokens.ToArray();
     }
 }

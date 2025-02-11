@@ -2,11 +2,17 @@ using Shared;
 
 namespace Gateway.Interpreter;
 
-public class Parser
+public class Parser(Lexer lexer)
 {
     private static readonly string[] ValidComparisons = ["=", ">", "<"];
 
-    public Node Parse(Token[] tokens)
+    public Node Parse(string input)
+    {
+        var tokens = lexer.Tokenize(input);
+        return Parse(tokens);
+    }
+    
+    private Node Parse(Token[] tokens)
     {
         var current = 0;
         if (tokens[current].Type != TokenType.Keyword)
