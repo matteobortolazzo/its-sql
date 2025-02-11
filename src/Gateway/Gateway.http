@@ -1,41 +1,28 @@
 # @Gateway_HostAddress = http://localhost:5205
-@Gateway_HostAddress = http://localhost:8082
+@Gateway_HostAddress = http://localhost:8080
 
-POST {{Gateway_HostAddress}}/users/query
+POST {{Gateway_HostAddress}}/containers/users/query
 Accept: application/json
 Content-Type: application/json
 
 {
-  "Sql": "SELECT id, age FROM c WHERE city = 'Verona'"
+  "Sql": "SELECT id, age FROM c WHERE city = 'Asolo'"
 }
 
 ###
 
-PUT {{Gateway_HostAddress}}/users
+PUT {{Gateway_HostAddress}}/containers/users/documents
 Accept: application/json
 Content-Type: application/json
 
 {
-  "id": "matteo1",
-  "name": "Matteo1",
+  "id": "matteo",
+  "name": "Matteo",
   "city": "Asolo",
   "age": 30
 }
 
 ###
 
-PUT {{Gateway_HostAddress}}/users
-Accept: application/json
-Content-Type: application/json
-
-{
-  "id": "matteo3",
-  "name": "Matteo3",
-  "city": "Verona",
-  "age": 10
-}
-
-###
-
-GET {{Gateway_HostAddress}}/users/matteo1?partitionKeyValue=Asolo
+GET {{Gateway_HostAddress}}/containers/users/documents/matteo1?partitionKeyValue=Asolo
 Accept: application/json

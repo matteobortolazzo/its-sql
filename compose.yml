@@ -1,9 +1,11 @@
 networks:
   ddsql_network:
+    name: ddsql_network
     driver: bridge
     
 volumes:
   ddsql_gateway_data:
+    name: ddsql_gateway_data
     driver: local
 
 services:

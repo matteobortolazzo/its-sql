@@ -5,7 +5,9 @@ using Docker.DotNet.Models;
 
 namespace Gateway.Services;
 
-public class DockerService(DockerClient dockerClient, ILogger logger)
+public class DockerService(
+    DockerClient dockerClient,
+    ILogger<DockerService> logger)
 {
     public async Task StartEngineContainerAsync(string partitionKeyValue)
     {
@@ -24,7 +26,7 @@ public class DockerService(DockerClient dockerClient, ILogger logger)
             Name = volumeName
         });
 
-        logger.LogInformation($"Volume {partitionKeyValueHash} created at {volumeResponse.Mountpoint}");
+        logger.LogInformation("Volume {VolumeName} created at {MountPoint}", partitionKeyValueHash, volumeResponse.Mountpoint);
 
         var containerResponse = await dockerClient.Containers.CreateContainerAsync(new CreateContainerParameters
         {
@@ -54,15 +56,14 @@ public class DockerService(DockerClient dockerClient, ILogger logger)
             User = "root"
         });
 
-        logger.LogInformation($"Container {partitionKeyValueHash} created: {containerResponse.ID}");
+        logger.LogInformation("Container {ContainerName} created: {ContainerId}", partitionKeyValueHash, containerResponse.ID);
 
         await dockerClient.Containers.StartContainerAsync(containerResponse.ID, null);
-        logger.LogInformation($"Container {partitionKeyValueHash} started");
-
+        logger.LogInformation("Container {ContainerName} started" , partitionKeyValueHash);
         await Task.Delay(2000);
     }
 
-    public string GetEngineContainerName(string partitionKeyValue) =>
+    public static string GetEngineContainerName(string partitionKeyValue) =>
         $"ddsql_engine_{GetHash(partitionKeyValue)}";
 
     private static int GetHash(string input)

@@ -12,7 +12,7 @@ public static class DocumentUpsertUseCase
 {
     public static RouteGroupBuilder MapUpsertDocument(this RouteGroupBuilder documentEndpoints)
     {
-        documentEndpoints.MapPut("/{container}", async (
+        documentEndpoints.MapPut("/", async (
                 HttpContext httpContext,
                 DockerService dockerService,
                 EngineService engineService,

@@ -1,4 +1,3 @@
-using System.Net;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Engine.Services;
@@ -12,7 +11,6 @@ public static class QueryUseCase
     public static RouteGroupBuilder MapQueryContainer(this RouteGroupBuilder containerEndpoints)
     {
         containerEndpoints.MapPost("/query", async (
-                HttpContext httpContext,
                 QueryExecutor queryExecutor,
                 [FromRoute] string container,
                 [FromBody] Node ast) =>

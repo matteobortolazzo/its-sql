@@ -4,6 +4,7 @@ using Gateway.Extensions;
 using Gateway.Interpreter;
 using Gateway.Services;
 using Microsoft.AspNetCore.Mvc;
+using Shared;
 
 namespace Gateway.Features.Containers;
 
@@ -31,13 +32,24 @@ public static class ContainerQueryUseCase
                         title: "Container not found");
                 }
 
-                var ast = parser.Parse(request.Sql);
+                Node ast;
+                try
+                {
+                    ast = parser.Parse(request.Sql);
+                }
+                catch (Exception e)
+                {
+                    return TypedResults.Problem(
+                        statusCode: (int)HttpStatusCode.BadRequest,
+                        title: e.Message);
+                }
+                
                 var partitionKeyValue = queryService.GetPartitionKeyValue(ast, partitionKeyPath!);
                 if (partitionKeyValue == null)
                 {
                     return TypedResults.Problem(
                         statusCode: (int)HttpStatusCode.BadRequest,
-                        title: "Partition key not found");
+                        title: "WHERE clause must contain partition key");
                 }
 
                 await dockerService.StartEngineContainerAsync(partitionKeyValue);
