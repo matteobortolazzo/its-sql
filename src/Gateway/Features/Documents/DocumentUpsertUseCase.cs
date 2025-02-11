@@ -18,7 +18,7 @@ public static class DocumentUpsertUseCase
                 EngineService engineService,
                 PartitionService partitionService,
                 [FromRoute] string container,
-                [FromBody] JsonObject jsonObject) =>
+                [FromBody] JsonObject document) =>
             {
                 if (!partitionService.TryGetPartitionKeyPath(container, out var partitionKeyPath))
                 {
@@ -27,11 +27,11 @@ public static class DocumentUpsertUseCase
                         title: "Container not found");
                 }
 
-                var partitionKeyValue = jsonObject[partitionKeyPath!]!.GetValue<string>();
+                var partitionKeyValue = document[partitionKeyPath!]!.GetValue<string>();
 
                 await dockerService.StartEngineContainerAsync(partitionKeyValue);
 
-                var body = JsonSerializer.Serialize(jsonObject);
+                var body = JsonSerializer.Serialize(document);
                 var content = new StringContent(body, Encoding.UTF8, "application/json");
                 var response = await engineService.GetClient(partitionKeyValue).PutAsync(container, content);
                 return await httpContext.ProxyAsync(response);

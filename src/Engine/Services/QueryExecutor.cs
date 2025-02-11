@@ -2,34 +2,22 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Shared;
 
-namespace Engine;
+namespace Engine.Services;
 
-public class Runner(ILogger logger, string container)
+public class QueryExecutor
 {
-    public async Task<JsonObject[]> RunAsync(Node node)
+    public JsonObject[] Filter(JsonObject[] results, Node ast)
     {
-        if (node is QueryNode queryNode)
+        if (ast is QueryNode queryNode)
         {
-            return await RunQueryAsync(queryNode);
+            return RunQuery(results, queryNode);
         }
 
         throw new Exception("Unknown node type");
     }
 
-    private async Task<JsonObject[]> RunQueryAsync(QueryNode queryNode)
+    private JsonObject[] RunQuery(JsonObject[] results, QueryNode queryNode)
     {
-        var tasks = Directory.GetFiles(GetContainerPath())
-            .Select(async fileName =>
-            {
-                var content = await File.ReadAllTextAsync(fileName);
-                return JsonSerializer.Deserialize<JsonObject>(content);
-            });
-        var results = await Task.WhenAll(tasks);
-        if (results.Length == 0)
-        {
-            return [];
-        }
-
         if (queryNode.Where != null)
         {
             results = RunWhere(results, queryNode.Where);
@@ -168,5 +156,4 @@ public class Runner(ILogger logger, string container)
         var resultValue = result[column].Deserialize<string>();
         return resultValue == value;
     }
-    private string GetContainerPath() => $"/etc/data/{container}";
 }
