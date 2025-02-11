@@ -2,13 +2,13 @@ namespace Gateway.Services;
 
 public class PartitionService
 {
-    private readonly Dictionary<string, string> _containers = new()
+    private readonly Dictionary<string, string?> _containers = new()
     {
         { "users", "city" }
     };
 
-    public string GetPartitionKeyPath(string container)
+    public bool TryGetPartitionKeyPath(string container, out string? partitionKeyPath)
     {
-        return _containers[container];
+        return _containers.TryGetValue(container, out partitionKeyPath);
     }
 }

@@ -22,10 +22,15 @@ public static class ContainerQueryUseCase
                 [FromRoute] string container, 
                 [FromBody] SqlRequest request) =>
             {
-                var partitionKeyPath = partitionService.GetPartitionKeyPath(container);
+                if (!partitionService.TryGetPartitionKeyPath(container, out var partitionKeyPath))
+                {
+                    return TypedResults.Problem(
+                        statusCode: (int)HttpStatusCode.NotFound,
+                        title: "Container not found");
+                }
 
                 var ast = parser.Parse(request.Sql);
-                var partitionKeyValue = queryService.GetPartitionKeyValue(ast, partitionKeyPath);
+                var partitionKeyValue = queryService.GetPartitionKeyValue(ast, partitionKeyPath!);
                 if (partitionKeyValue == null)
                 {
                     return TypedResults.Problem(

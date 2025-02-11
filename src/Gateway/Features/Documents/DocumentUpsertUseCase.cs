@@ -1,3 +1,4 @@
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -17,15 +18,21 @@ public static class DocumentUpsertUseCase
                 [FromRoute] string container,
                 [FromBody] JsonObject jsonObject) =>
             {
-                var partitionKeyPath = partitionService.GetPartitionKeyPath(container);
-                var partitionKeyValue = jsonObject[partitionKeyPath]!.GetValue<string>();
+                if (!partitionService.TryGetPartitionKeyPath(container, out var partitionKeyPath))
+                {
+                    return TypedResults.Problem(
+                        statusCode: (int)HttpStatusCode.NotFound,
+                        title: "Container not found");
+                }
+                
+                var partitionKeyValue = jsonObject[partitionKeyPath!]!.GetValue<string>();
 
                 await dockerService.StartEngineContainerAsync(partitionKeyValue);
                 
                 var body = JsonSerializer.Serialize(jsonObject);
                 var content = new StringContent(body, Encoding.UTF8, "application/json");
                 var response = await engineService.GetClient(partitionKeyValue).PutAsync(container, content);
-                return TypedResults.Ok(response.ReasonPhrase);
+                return (IResult)TypedResults.Ok(response.ReasonPhrase);
             })
             .WithName("UpsertDocument");
         
