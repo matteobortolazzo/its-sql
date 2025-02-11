@@ -10,6 +10,7 @@
     <ItemGroup>
         <PackageReference Include="Docker.DotNet" Version="3.125.15" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.1"/>
+        <PackageReference Include="Microsoft.Data.Sqlite" Version="9.0.1" />
         <PackageReference Include="NSwag.AspNetCore" Version="14.2.0" />
     </ItemGroup>
 

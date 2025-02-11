@@ -14,12 +14,13 @@ public static class DocumentGetUseCase
                 HttpContext httpContext,
                 DockerService dockerService,
                 EngineService engineService,
-                PartitionService partitionService,
+                ContainerService containerService,
                 [FromRoute] string container,
                 [FromRoute] string documentId,
                 [FromQuery] string partitionKeyValue) =>
             {
-                if (!partitionService.TryGetPartitionKeyPath(container, out _))
+                var partitionKeyPath = await containerService.GetPartitionKeyPathAsync(container);
+                if (partitionKeyPath == null)
                 {
                     return TypedResults.Problem(
                         statusCode: (int)HttpStatusCode.NotFound,

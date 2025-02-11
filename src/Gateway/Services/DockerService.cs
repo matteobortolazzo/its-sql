@@ -21,12 +21,18 @@ public class DockerService(
         }
 
         var volumeName = $"ddsql_engine_{partitionKeyValueHash}_data";
-        var volumeResponse = await dockerClient.Volumes.CreateAsync(new VolumesCreateParameters
-        {
-            Name = volumeName
-        });
 
-        logger.LogInformation("Volume {VolumeName} created at {MountPoint}", partitionKeyValueHash, volumeResponse.Mountpoint);
+        var allVolumes = await dockerClient.Volumes.ListAsync();
+        if (allVolumes.Volumes.All(volume => volume.Name != volumeName))
+        {
+            var volumeResponse = await dockerClient.Volumes.CreateAsync(new VolumesCreateParameters
+            {
+                Name = volumeName
+            });
+            logger.LogInformation("Volume {VolumeName} created at {MountPoint}", 
+                partitionKeyValueHash,
+                volumeResponse.Mountpoint);
+        }
 
         var containerResponse = await dockerClient.Containers.CreateContainerAsync(new CreateContainerParameters
         {
@@ -38,7 +44,7 @@ public class DockerService(
                 Binds = new List<string>
                 {
                     $"{volumeName}:/etc/data"
-                },
+                }
             },
             NetworkingConfig = new NetworkingConfig
             {
@@ -56,10 +62,11 @@ public class DockerService(
             User = "root"
         });
 
-        logger.LogInformation("Container {ContainerName} created: {ContainerId}", partitionKeyValueHash, containerResponse.ID);
+        logger.LogInformation("Container {ContainerName} created: {ContainerId}", partitionKeyValueHash,
+            containerResponse.ID);
 
         await dockerClient.Containers.StartContainerAsync(containerResponse.ID, null);
-        logger.LogInformation("Container {ContainerName} started" , partitionKeyValueHash);
+        logger.LogInformation("Container {ContainerName} started", partitionKeyValueHash);
         await Task.Delay(2000);
     }
 

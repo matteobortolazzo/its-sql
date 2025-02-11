@@ -20,7 +20,7 @@ builder.Services.AddSingleton<Parser>();
 
 builder.Services.AddSingleton<DockerService>();
 builder.Services.AddSingleton<EngineService>();
-builder.Services.AddSingleton<PartitionService>();
+builder.Services.AddSingleton<ContainerService>();
 builder.Services.AddSingleton<QueryService>();
 
 var app = builder.Build();
@@ -32,10 +32,15 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapGroup("containers")
+    .MapCreateContainer()
+    .MapGetContainers()
     .MapQueryContainer();
 
 app.MapGroup("containers/{container}/documents")
     .MapUpsertDocument()
     .MapGetDocument();
+
+var containerService = app.Services.GetRequiredService<ContainerService>();
+await containerService.EnsureDatabaseExistsAsync();
 
 app.Run();

@@ -16,11 +16,12 @@ public static class DocumentUpsertUseCase
                 HttpContext httpContext,
                 DockerService dockerService,
                 EngineService engineService,
-                PartitionService partitionService,
+                ContainerService containerService,
                 [FromRoute] string container,
                 [FromBody] JsonObject document) =>
             {
-                if (!partitionService.TryGetPartitionKeyPath(container, out var partitionKeyPath))
+                var partitionKeyPath = await containerService.GetPartitionKeyPathAsync(container);
+                if (partitionKeyPath == null)
                 {
                     return TypedResults.Problem(
                         statusCode: (int)HttpStatusCode.NotFound,

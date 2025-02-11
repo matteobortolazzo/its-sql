@@ -48,6 +48,8 @@ Both projects are `NET9` *minimal API*. The use extension methods for `RouteGrou
 
 ```csharp
 app.MapGroup("containers")
+    .MapCreateContainer()
+    .MapGetContainers()
     .MapQueryContainer();
 
 app.MapGroup("containers/{container}/documents")

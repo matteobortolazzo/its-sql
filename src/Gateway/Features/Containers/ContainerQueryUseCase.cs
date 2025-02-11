@@ -19,13 +19,14 @@ public static class ContainerQueryUseCase
                 HttpContext httpContext,
                 DockerService dockerService,
                 EngineService engineService,
-                PartitionService partitionService,
+                ContainerService containerService,
                 QueryService queryService,
                 Parser parser,
                 [FromRoute] string container,
                 [FromBody] SqlRequest request) =>
             {
-                if (!partitionService.TryGetPartitionKeyPath(container, out var partitionKeyPath))
+                var partitionKeyPath = await containerService.GetPartitionKeyPathAsync(container);
+                if (partitionKeyPath == null)
                 {
                     return TypedResults.Problem(
                         statusCode: (int)HttpStatusCode.NotFound,
