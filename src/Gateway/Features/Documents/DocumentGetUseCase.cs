@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json.Nodes;
+using Gateway.Extensions;
 using Gateway.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,6 +11,7 @@ public static class DocumentGetUseCase
     public static RouteGroupBuilder MapGetDocument(this RouteGroupBuilder documentEndpoints)
     {
         documentEndpoints.MapGet("{documentId}", async (
+                HttpContext httpContext,
                 DockerService dockerService,
                 EngineService engineService,
                 PartitionService partitionService,
@@ -26,9 +28,9 @@ public static class DocumentGetUseCase
 
                 await dockerService.StartEngineContainerAsync(partitionKeyValue);
 
-                var results = await engineService.GetClient(partitionKeyValue)
-                    .GetFromJsonAsync<JsonObject>($"{container}/{documentId}");
-                return (IResult)TypedResults.Ok(results);
+                var response = await engineService.GetClient(partitionKeyValue)
+                    .GetAsync($"{container}/{documentId}");
+                return await httpContext.ProxyAsync(response);
             })
             .WithName("GetDocument");
 

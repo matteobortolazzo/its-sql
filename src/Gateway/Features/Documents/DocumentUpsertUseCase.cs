@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Gateway.Extensions;
 using Gateway.Services;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,6 +13,7 @@ public static class DocumentUpsertUseCase
     public static RouteGroupBuilder MapUpsertDocument(this RouteGroupBuilder documentEndpoints)
     {
         documentEndpoints.MapPut("/{container}", async (
+                HttpContext httpContext,
                 DockerService dockerService,
                 EngineService engineService,
                 PartitionService partitionService,
@@ -24,18 +26,18 @@ public static class DocumentUpsertUseCase
                         statusCode: (int)HttpStatusCode.NotFound,
                         title: "Container not found");
                 }
-                
+
                 var partitionKeyValue = jsonObject[partitionKeyPath!]!.GetValue<string>();
 
                 await dockerService.StartEngineContainerAsync(partitionKeyValue);
-                
+
                 var body = JsonSerializer.Serialize(jsonObject);
                 var content = new StringContent(body, Encoding.UTF8, "application/json");
                 var response = await engineService.GetClient(partitionKeyValue).PutAsync(container, content);
-                return (IResult)TypedResults.Ok(response.ReasonPhrase);
+                return await httpContext.ProxyAsync(response);
             })
             .WithName("UpsertDocument");
-        
+
         return documentEndpoints;
     }
 }

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json.Nodes;
+using Gateway.Extensions;
 using Gateway.Interpreter;
 using Gateway.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -14,12 +15,13 @@ public static class ContainerQueryUseCase
     public static RouteGroupBuilder MapQueryContainer(this RouteGroupBuilder containerEndpoints)
     {
         containerEndpoints.MapPost("/{container}/query", async (
+                HttpContext httpContext,
                 DockerService dockerService,
                 EngineService engineService,
                 PartitionService partitionService,
                 QueryService queryService,
                 Parser parser,
-                [FromRoute] string container, 
+                [FromRoute] string container,
                 [FromBody] SqlRequest request) =>
             {
                 if (!partitionService.TryGetPartitionKeyPath(container, out var partitionKeyPath))
@@ -42,8 +44,7 @@ public static class ContainerQueryUseCase
 
                 var response = await engineService.GetClient(partitionKeyValue)
                     .PostAsJsonAsync($"{container}/query", ast);
-                var results = await response.Content.ReadFromJsonAsync<JsonObject[]>();
-                return (IResult)TypedResults.Ok(results);
+                return await httpContext.ProxyAsync(response);
             })
             .WithName("Query");
 
