@@ -12,27 +12,23 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Logging.ClearProviders();
 builder.Logging.AddConsole();
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
-
-// app.UseHttpsRedirection();
 
 var containers = new Dictionary<string, string>()
 {
     { "users", "city" }
 };
 
-var dockerClient = new DockerClientConfiguration(new Uri("unix:///var/run/docker.sock")).CreateClient();
+var dockerHostUri = new Uri(Environment.GetEnvironmentVariable("DOCKER_HOST")!);
+var dockerClient = new DockerClientConfiguration(dockerHostUri).CreateClient();
 
 app.MapPost("/{container}/query", async (
         IHttpClientFactory httpClientFactory,
@@ -54,9 +50,7 @@ app.MapPost("/{container}/query", async (
         
         await StartEngineContainerAsync(dockerClient, app.Logger, partitionKeyValue);
         
-        var httpClient = httpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri($"http://engine_{GetHash(partitionKeyValue)}:8080");
-        var response = await httpClient.PostAsJsonAsync($"{container}/query", ast);
+        var response = await GetClient(httpClientFactory, partitionKeyValue).PostAsJsonAsync($"{container}/query", ast);
         var results = await response.Content.ReadFromJsonAsync<JsonObject[]>();
         return (IResult)TypedResults.Ok(results);
     })
@@ -71,11 +65,9 @@ app.MapPut("/{container}", async (
         var partitionKeyValue = jsonObject[partitionKeyPath]!.GetValue<string>();
         await StartEngineContainerAsync(dockerClient, app.Logger, partitionKeyValue);
         
-        var httpClient = httpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri($"http://engine_{GetHash(partitionKeyValue)}:8080");
         var body = JsonSerializer.Serialize(jsonObject);
         var content = new StringContent(body, Encoding.UTF8, "application/json");
-        var response = await httpClient.PutAsync(container, content);
+        var response = await GetClient(httpClientFactory, partitionKeyValue).PutAsync(container, content);
         return TypedResults.Ok(response.ReasonPhrase);
     })
     .WithName("Upsert");
@@ -88,14 +80,20 @@ app.MapGet("/{container}/{documentId}", async (
     {
         await StartEngineContainerAsync(dockerClient, app.Logger, partitionKeyValue);
         
-        var httpClient = httpClientFactory.CreateClient();
-        httpClient.BaseAddress = new Uri($"http://engine_{GetHash(partitionKeyValue)}:8080");
-        var results = await httpClient.GetFromJsonAsync<JsonObject>($"{container}/{documentId}");
+        var results = await GetClient(httpClientFactory, partitionKeyValue).GetFromJsonAsync<JsonObject>($"{container}/{documentId}");
         return TypedResults.Ok(results);
     })
     .WithName("Get");
 
 app.Run();
+
+HttpClient GetClient(IHttpClientFactory httpClientFactory, string partitionKey)
+{
+     var httpClient = httpClientFactory.CreateClient();
+     var containerName = GetEngineContainerName(partitionKey);
+     httpClient.BaseAddress = new Uri($"http://{containerName}:8080");
+     return httpClient;
+}
 
 int GetHash(string input)
 {
@@ -108,7 +106,7 @@ int GetHash(string input)
 async Task StartEngineContainerAsync(DockerClient client, ILogger logger, string partitionKeyValue)
 {
     var partitionKeyValueHash = GetHash(partitionKeyValue);
-    var containerName = $"engine_{partitionKeyValueHash}";
+    var containerName = GetEngineContainerName(partitionKeyValue);
 
     var allContainer = await client.Containers.ListContainersAsync(new ContainersListParameters());
     if (allContainer.Any(container => container.Names[0] == $"/{containerName}"))
@@ -116,7 +114,7 @@ async Task StartEngineContainerAsync(DockerClient client, ILogger logger, string
         return;
     }
 
-    var volumeName = $"volume_{partitionKeyValueHash}";
+    var volumeName = $"ddsql_engine_{partitionKeyValueHash}_data";
     var volumeResponse = await client.Volumes.CreateAsync(new VolumesCreateParameters
     {
         Name = volumeName
@@ -126,7 +124,7 @@ async Task StartEngineContainerAsync(DockerClient client, ILogger logger, string
 
     var containerResponse = await client.Containers.CreateContainerAsync(new CreateContainerParameters
     {
-        Image = "db_engine_image",
+        Image = "ddsql_engine",
         Name = containerName,
         HostConfig = new HostConfig
         {
@@ -141,7 +139,7 @@ async Task StartEngineContainerAsync(DockerClient client, ILogger logger, string
             EndpointsConfig = new Dictionary<string, EndpointSettings>
             {
                 {
-                    "src_db_network", new EndpointSettings()
+                    "ddsql_network", new EndpointSettings()
                 }
             }
         },
@@ -159,6 +157,8 @@ async Task StartEngineContainerAsync(DockerClient client, ILogger logger, string
 
     await Task.Delay(2000);
 }
+
+string GetEngineContainerName(string partitionKeyValue) => $"ddsql_engine_{GetHash(partitionKeyValue)}";
 
 [Serializable]
 public record SqlRequest(string Sql);

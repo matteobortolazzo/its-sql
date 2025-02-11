@@ -6,10 +6,6 @@ EXPOSE 8081
 
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 ARG BUILD_CONFIGURATION=Release
-WORKDIR /src
-COPY ["Engine/Engine.csproj", "Engine/"]
-COPY ["Shared/Shared.csproj", "Shared/"]
-RUN dotnet restore "Engine/Engine.csproj"
 COPY . .
 WORKDIR "/src/Engine"
 RUN dotnet build "Engine.csproj" -c $BUILD_CONFIGURATION -o /app/build
