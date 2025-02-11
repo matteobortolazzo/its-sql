@@ -1,4 +1,3 @@
-# @Gateway_HostAddress = http://localhost:5205
 @Gateway_HostAddress = http://localhost:8080
 
 POST {{Gateway_HostAddress}}/containers/users/query

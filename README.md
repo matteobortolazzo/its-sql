@@ -61,7 +61,7 @@ The query is converted to an *AST* (Abstract Syntax Tree) so that:
 - The `Gateway` can extract the partition key value from the query
 - The `Engine` can execute the query
 
-The service tokenize the input, parse it and build the *AST*.
+The gateway, after finding the partition key value, send the *AST* to the correct execute it.
 
 ### Proxy code
 
@@ -77,3 +77,7 @@ public static async Task<IResult> ProxyAsync(this HttpContext httpContext, HttpR
     return TypedResults.Empty;
 }
 ```
+
+### Hashing
+
+It uses `SHA256` to hash the partition key value and used to find the correct engine.
